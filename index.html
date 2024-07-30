@@ -12,15 +12,6 @@
             width: 100%;
             height: 80vh;
             border: 1px solid #ddd;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
         #local-video {
             position: absolute;
@@ -28,7 +19,6 @@
             right: 10px;
             width: 30%;
             border: 1px solid #ddd;
-            cursor: move;
         }
         #message-container {
             height: 15vh;
@@ -101,11 +91,13 @@
                         peerIdDisplay.textContent = peerId;
                         remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
 
+                        // Try connecting to the remote peer
                         connection = peer.connect(remotePeerId);
                         connection.on('open', () => {
                             console.log('Connection established with ' + remotePeerId);
                         });
 
+                        // Automatically call the remote peer if current peer is peerId2
                         if (peerId === peerId2) {
                             console.log('Calling remote peer ' + remotePeerId);
                             const call = peer.call(remotePeerId, stream);
@@ -156,6 +148,7 @@
                     });
                 }
 
+                // Determine the peer ID to use
                 setupPeer(peerId1);
 
                 sendMessageButton.addEventListener('click', () => {
@@ -177,24 +170,6 @@
                         localVideo.srcObject = null;
                         remotePeerId = null;
                     }
-                });
-
-                // Drag-and-drop functionality for local video
-                localVideo.addEventListener('mousedown', function(e) {
-                    const videoRect = localVideo.getBoundingClientRect();
-                    const offsetX = e.clientX - videoRect.left;
-                    const offsetY = e.clientY - videoRect.top;
-
-                    function onMouseMove(e) {
-                        localVideo.style.left = `${e.clientX - offsetX}px`;
-                        localVideo.style.top = `${e.clientY - offsetY}px`;
-                    }
-
-                    document.addEventListener('mousemove', onMouseMove);
-
-                    document.addEventListener('mouseup', function() {
-                        document.removeEventListener('mousemove', onMouseMove);
-                    }, { once: true });
                 });
 
             })
