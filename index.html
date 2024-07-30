@@ -90,6 +90,14 @@
                         console.log('My peer ID is: ' + peerId);
                         currentPeerId = peerId;
                         remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
+
+                        // Automatically call the remote peer if current peer is peerId2
+                        if (peerId === peerId2) {
+                            const call = peer.call(remotePeerId, stream);
+                            call.on('stream', remoteStream => {
+                                mainVideo.srcObject = remoteStream;
+                            });
+                        }
                     });
 
                     peer.on('call', call => {
