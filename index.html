@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerJS Video Chat</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        #video-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #ddd;
+        }
+
+        #local-video {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30%;
+            border: 1px solid #ddd;
+        }
+
+        #message-container {
+            height: 15vh;
+            border-top: 1px solid #ddd;
+            overflow-y: auto;
+        }
+
+        #message-input {
+            border-top: 1px solid #ddd;
+        }
+
+        .control-button {
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <div id="video-container" class="mb-4">
+            <video id="main-video" autoplay></video>
+            <video id="local-video" autoplay muted></video>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <button id="end-call" class="btn btn-danger"><i class="fas fa-phone-slash"></i> End Call</button>
+            </div>
+            <div class="col-md-6">
+                <div id="messages"></div>
+                <div class="input-group mt-2">
+                    <input type="text" id="message" class="form-control" placeholder="Type a message">
+                    <div class="input-group-append">
+                        <button id="send-message" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script>
+        const peerId1 = '11111-22222-33333-44444-55555';
+        const peerId2 = '66666-77777-88888-99999-00000';
+        let currentPeerId = null;
+        let remotePeerId = null;
+        let peer = null;
+
+        const mainVideo = document.getElementById('main-video');
+        const localVideo = document.getElementById('local-video');
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('message');
+        const sendMessageButton = document.getElementById('send-message');
+        const endCallButton = document.getElementById('end-call');
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                localVideo.srcObject = stream;
+
+                // Function to set up peer with predefined ID
+                function setupPeer(id) {
+                    peer = new Peer(id);
+
+                    peer.on('open', peerId => {
+                        console.log('My peer ID is: ' + peerId);
+                        currentPeerId = peerId;
+                        remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
+                    });
+
+                    peer.on('call', call => {
+                        if (!remotePeerId) {
+                            remotePeerId = call.peer;
+                            call.answer(stream);
+                            call.on('stream', remoteStream => {
+                                mainVideo.srcObject = remoteStream;
+                            });
+                        } else {
+                            call.close();
+                        }
+                    });
+
+                    peer.on('connection', conn => {
+                        conn.on('data', data => {
+                            const p = document.createElement('p');
+                            p.textContent = data;
+                            messagesDiv.appendChild(p);
+                        });
+                    });
+                }
+
+                // Set up peer with predefined ID
+                const savedPeerId = localStorage.getItem('peerId');
+                if (!savedPeerId) {
+                    localStorage.setItem('peerId', peerId1);
+                    setupPeer(peerId1);
+                } else if (savedPeerId === peerId1) {
+                    localStorage.setItem('peerId', peerId2);
+                    setupPeer(peerId2);
+                } else if (savedPeerId === peerId2) {
+                    alert('Room is full');
+                    return;
+                }
+
+                sendMessageButton.addEventListener('click', () => {
+                    if (currentPeerId && remotePeerId) {
+                        const conn = peer.connect(remotePeerId);
+                        conn.on('open', () => {
+                            conn.send(messageInput.value);
+                            const p = document.createElement('p');
+                            p.textContent = `You: ${messageInput.value}`;
+                            messagesDiv.appendChild(p);
+                            messageInput.value = '';
+                        });
+                    }
+                });
+
+                endCallButton.addEventListener('click', () => {
+                    if (currentPeerId && remotePeerId) {
+                        peer.disconnect();
+                        mainVideo.srcObject.getTracks().forEach(track => track.stop());
+                        localVideo.srcObject.getTracks().forEach(track => track.stop());
+                        mainVideo.srcObject = null;
+                        localVideo.srcObject = null;
+                        remotePeerId = null;
+                    }
+                });
+
+            })
+            .catch(err => {
+                console.error('Failed to get media: ', err);
+            });
+
+    </script>
+</body>
+
+</html>
