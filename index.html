@@ -99,9 +99,14 @@
 
                         // Automatically call the remote peer if current peer is peerId2
                         if (peerId === peerId2) {
+                            console.log('Calling remote peer ' + remotePeerId);
                             const call = peer.call(remotePeerId, stream);
                             call.on('stream', remoteStream => {
+                                console.log('Received remote stream');
                                 mainVideo.srcObject = remoteStream;
+                            });
+                            call.on('error', err => {
+                                console.error('Call error:', err);
                             });
                         }
                     });
@@ -109,13 +114,16 @@
                     peer.on('call', call => {
                         if (!remotePeerId) {
                             remotePeerId = call.peer;
-                            call.answer(stream);
-                            call.on('stream', remoteStream => {
-                                mainVideo.srcObject = remoteStream;
-                            });
-                        } else {
-                            call.close();
                         }
+                        console.log('Answering call from ' + remotePeerId);
+                        call.answer(stream);
+                        call.on('stream', remoteStream => {
+                            console.log('Received remote stream from ' + call.peer);
+                            mainVideo.srcObject = remoteStream;
+                        });
+                        call.on('error', err => {
+                            console.error('Call error:', err);
+                        });
                     });
 
                     peer.on('connection', conn => {
