@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +13,6 @@
             height: 80vh;
             border: 1px solid #ddd;
         }
-
         #local-video {
             position: absolute;
             top: 10px;
@@ -22,23 +20,19 @@
             width: 30%;
             border: 1px solid #ddd;
         }
-
         #message-container {
             height: 15vh;
             border-top: 1px solid #ddd;
             overflow-y: auto;
         }
-
         #message-input {
             border-top: 1px solid #ddd;
         }
-
         .control-button {
             margin: 5px;
         }
     </style>
 </head>
-
 <body>
     <div class="container mt-4">
         <div id="video-container" class="mb-4">
@@ -59,6 +53,11 @@
                 </div>
             </div>
         </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h5>Your Peer ID: <span id="peer-id"></span></h5>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -76,6 +75,7 @@
         const messageInput = document.getElementById('message');
         const sendMessageButton = document.getElementById('send-message');
         const endCallButton = document.getElementById('end-call');
+        const peerIdDisplay = document.getElementById('peer-id');
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then(stream => {
@@ -87,6 +87,7 @@
                     peer.on('open', peerId => {
                         console.log('My peer ID is: ' + peerId);
                         currentPeerId = peerId;
+                        peerIdDisplay.textContent = peerId;
                         remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
 
                         // Automatically call the remote peer if current peer is peerId2
@@ -117,19 +118,22 @@
                             messagesDiv.appendChild(p);
                         });
                     });
+
+                    peer.on('error', err => {
+                        if (err.type === 'unavailable-id') {
+                            if (id === peerId1) {
+                                setupPeer(peerId2);
+                            } else {
+                                alert('Room is full');
+                            }
+                        } else {
+                            console.error('PeerJS error:', err);
+                        }
+                    });
                 }
 
                 // Determine the peer ID to use
-                if (!localStorage.getItem('peer1Occupied')) {
-                    localStorage.setItem('peer1Occupied', 'true');
-                    setupPeer(peerId1);
-                } else if (!localStorage.getItem('peer2Occupied')) {
-                    localStorage.setItem('peer2Occupied', 'true');
-                    setupPeer(peerId2);
-                } else {
-                    alert('Room is full');
-                    return;
-                }
+                setupPeer(peerId1);
 
                 sendMessageButton.addEventListener('click', () => {
                     if (currentPeerId && remotePeerId) {
@@ -164,7 +168,7 @@
             .catch(err => {
                 console.error('Failed to get media: ', err);
             });
+
     </script>
 </body>
-
 </html>
