@@ -68,6 +68,7 @@
         let currentPeerId = null;
         let remotePeerId = null;
         let peer = null;
+        let connection = null;
 
         const mainVideo = document.getElementById('main-video');
         const localVideo = document.getElementById('local-video');
@@ -89,6 +90,12 @@
                         currentPeerId = peerId;
                         peerIdDisplay.textContent = peerId;
                         remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
+
+                        // Try connecting to the remote peer
+                        connection = peer.connect(remotePeerId);
+                        connection.on('open', () => {
+                            console.log('Connection established with ' + remotePeerId);
+                        });
 
                         // Automatically call the remote peer if current peer is peerId2
                         if (peerId === peerId2) {
@@ -112,6 +119,7 @@
                     });
 
                     peer.on('connection', conn => {
+                        connection = conn;
                         conn.on('data', data => {
                             const p = document.createElement('p');
                             p.textContent = data;
@@ -136,15 +144,12 @@
                 setupPeer(peerId1);
 
                 sendMessageButton.addEventListener('click', () => {
-                    if (currentPeerId && remotePeerId) {
-                        const conn = peer.connect(remotePeerId);
-                        conn.on('open', () => {
-                            conn.send(messageInput.value);
-                            const p = document.createElement('p');
-                            p.textContent = `You: ${messageInput.value}`;
-                            messagesDiv.appendChild(p);
-                            messageInput.value = '';
-                        });
+                    if (connection && connection.open) {
+                        connection.send(messageInput.value);
+                        const p = document.createElement('p');
+                        p.textContent = `You: ${messageInput.value}`;
+                        messagesDiv.appendChild(p);
+                        messageInput.value = '';
                     }
                 });
 
@@ -156,11 +161,6 @@
                         mainVideo.srcObject = null;
                         localVideo.srcObject = null;
                         remotePeerId = null;
-                        if (currentPeerId === peerId1) {
-                            localStorage.removeItem('peer1Occupied');
-                        } else if (currentPeerId === peerId2) {
-                            localStorage.removeItem('peer2Occupied');
-                        }
                     }
                 });
 
