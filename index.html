@@ -89,6 +89,7 @@
                         currentPeerId = peerId;
                         remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
 
+                        // Automatically call the remote peer if current peer is peerId2
                         if (peerId === peerId2) {
                             const call = peer.call(remotePeerId, stream);
                             call.on('stream', remoteStream => {
@@ -118,19 +119,16 @@
                     });
                 }
 
-                const savedPeerId = localStorage.getItem('peerId');
-                if (!savedPeerId) {
-                    localStorage.setItem('peerId', peerId1);
+                // Determine the peer ID to use
+                if (!localStorage.getItem('peer1Occupied')) {
+                    localStorage.setItem('peer1Occupied', 'true');
                     setupPeer(peerId1);
-                } else if (savedPeerId === peerId1) {
-                    if (localStorage.getItem('peerId2') !== peerId2) {
-                        localStorage.setItem('peerId2', peerId2);
-                        setupPeer(peerId2);
-                    } else {
-                        alert('Room is full');
-                    }
-                } else if (savedPeerId === peerId2) {
+                } else if (!localStorage.getItem('peer2Occupied')) {
+                    localStorage.setItem('peer2Occupied', 'true');
                     setupPeer(peerId2);
+                } else {
+                    alert('Room is full');
+                    return;
                 }
 
                 sendMessageButton.addEventListener('click', () => {
@@ -154,6 +152,11 @@
                         mainVideo.srcObject = null;
                         localVideo.srcObject = null;
                         remotePeerId = null;
+                        if (currentPeerId === peerId1) {
+                            localStorage.removeItem('peer1Occupied');
+                        } else if (currentPeerId === peerId2) {
+                            localStorage.removeItem('peer2Occupied');
+                        }
                     }
                 });
 
