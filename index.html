@@ -7,7 +7,6 @@
     <title>PeerJS Video Chat</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-
     <style>
         #video-container {
             position: relative;
@@ -82,7 +81,6 @@
             .then(stream => {
                 localVideo.srcObject = stream;
 
-                // Function to set up peer with predefined ID
                 function setupPeer(id) {
                     peer = new Peer(id);
 
@@ -91,7 +89,6 @@
                         currentPeerId = peerId;
                         remotePeerId = (peerId === peerId1) ? peerId2 : peerId1;
 
-                        // Automatically call the remote peer if current peer is peerId2
                         if (peerId === peerId2) {
                             const call = peer.call(remotePeerId, stream);
                             call.on('stream', remoteStream => {
@@ -121,17 +118,19 @@
                     });
                 }
 
-                // Set up peer with predefined ID
                 const savedPeerId = localStorage.getItem('peerId');
                 if (!savedPeerId) {
                     localStorage.setItem('peerId', peerId1);
                     setupPeer(peerId1);
                 } else if (savedPeerId === peerId1) {
-                    localStorage.setItem('peerId', peerId2);
-                    setupPeer(peerId2);
+                    if (localStorage.getItem('peerId2') !== peerId2) {
+                        localStorage.setItem('peerId2', peerId2);
+                        setupPeer(peerId2);
+                    } else {
+                        alert('Room is full');
+                    }
                 } else if (savedPeerId === peerId2) {
-                    alert('Room is full');
-                    return;
+                    setupPeer(peerId2);
                 }
 
                 sendMessageButton.addEventListener('click', () => {
@@ -162,7 +161,6 @@
             .catch(err => {
                 console.error('Failed to get media: ', err);
             });
-
     </script>
 </body>
 
