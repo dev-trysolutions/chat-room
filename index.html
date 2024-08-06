@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +18,13 @@
             align-items: center;
             overflow: hidden;
         }
+
         video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         #local-video {
             position: absolute;
             top: 10px;
@@ -31,19 +34,23 @@
             border: 1px solid #ddd;
             cursor: move;
         }
+
         #message-container {
             height: 15vh;
             border-top: 1px solid #ddd;
             overflow-y: auto;
         }
+
         #message-input {
             border-top: 1px solid #ddd;
         }
+
         .control-button {
             margin: 5px;
         }
     </style>
 </head>
+
 <body>
     <div class="container mt-4">
         <div id="video-container" class="mb-4">
@@ -98,7 +105,17 @@
                 localVideo.srcObject = stream;
 
                 function setupPeer(id) {
-                    peer = new Peer(id);
+                    peer = new Peer(id, {
+                        config: {
+                            'iceServers': [
+                                { url: 'stun:stun.l.google.com:19302' },
+                                { url: 'stun:stun1.l.google.com:19302' },
+                                { url: 'stun:stun2.l.google.com:19302' },
+                                { url: 'stun:stun3.l.google.com:19302' },
+                                { url: 'stun:stun4.l.google.com:19302' }
+                            ]
+                        }
+                    });
 
                     peer.on('open', peerId => {
                         console.log('My peer ID is: ' + peerId);
@@ -224,7 +241,7 @@
                 });
 
                 // Drag-and-drop functionality for local video
-                localVideo.addEventListener('mousedown', function(e) {
+                localVideo.addEventListener('mousedown', function (e) {
                     const videoRect = localVideo.getBoundingClientRect();
                     const offsetX = e.clientX - videoRect.left;
                     const offsetY = e.clientY - videoRect.top;
@@ -236,7 +253,7 @@
 
                     document.addEventListener('mousemove', onMouseMove);
 
-                    document.addEventListener('mouseup', function() {
+                    document.addEventListener('mouseup', function () {
                         document.removeEventListener('mousemove', onMouseMove);
                     }, { once: true });
                 });
@@ -248,4 +265,5 @@
 
     </script>
 </body>
+
 </html>
