@@ -101,12 +101,11 @@
         let typingTimeout;
 
         const iceServers = [
-            { urls: "stun:stun.l.google.com:19302" }, // Optional STUN server
-            {
-                urls: "turn:try-turn.vercel.app/api", // Your TURN server URL
-                username: "user", // Your TURN username
-                credential: "password" // Your TURN password
-            }
+            { urls: "stun:stun.relay.metered.ca:80" },
+            { urls: "turn:global.relay.metered.ca:80", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" },
+            { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" },
+            { urls: "turn:global.relay.metered.ca:443", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" },
+            { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" }
         ];
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -269,7 +268,6 @@
             });
 
     </script>
-
 </body>
 
 </html>
