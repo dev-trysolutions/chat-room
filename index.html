@@ -100,22 +100,20 @@
 
         let typingTimeout;
 
+        const iceServers = [
+            { urls: "stun:stun.relay.metered.ca:80" },
+            { urls: "turn:global.relay.metered.ca:80", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" },
+            { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" },
+            { urls: "turn:global.relay.metered.ca:443", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" },
+            { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "6ed4d24ab2e8604c7bdabb8e", credential: "LzTqOJjNlKdD67pv" }
+        ];
+
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then(stream => {
                 localVideo.srcObject = stream;
 
                 function setupPeer(id) {
-                    peer = new Peer(id, {
-                        config: {
-                            'iceServers': [
-                                { url: 'stun:stun.l.google.com:19302' },
-                                { url: 'stun:stun1.l.google.com:19302' },
-                                { url: 'stun:stun2.l.google.com:19302' },
-                                { url: 'stun:stun3.l.google.com:19302' },
-                                { url: 'stun:stun4.l.google.com:19302' }
-                            ]
-                        }
-                    });
+                    peer = new Peer(id, { config: { iceServers } });
 
                     peer.on('open', peerId => {
                         console.log('My peer ID is: ' + peerId);
@@ -188,7 +186,7 @@
                     });
                 }
 
-                function tryConnectToRemotePeer() {
+                async function tryConnectToRemotePeer() {
                     const conn = peer.connect(remotePeerId);
                     conn.on('open', () => {
                         console.log('Connection established with ' + remotePeerId);
@@ -209,7 +207,7 @@
                     });
                 }
 
-                // Determine the peer ID to use
+                // Set up peer connection with the first ID
                 setupPeer(peerId1);
 
                 messageInput.addEventListener('input', () => {
@@ -241,22 +239,28 @@
                 });
 
                 // Drag-and-drop functionality for local video
-                localVideo.addEventListener('mousedown', function (e) {
-                    const videoRect = localVideo.getBoundingClientRect();
-                    const offsetX = e.clientX - videoRect.left;
-                    const offsetY = e.clientY - videoRect.top;
+                localVideo.addEventListener('mousedown', (e) => {
+                    let shiftX = e.clientX - localVideo.getBoundingClientRect().left;
+                    let shiftY = e.clientY - localVideo.getBoundingClientRect().top;
 
-                    function onMouseMove(e) {
-                        localVideo.style.left = `${e.clientX - offsetX}px`;
-                        localVideo.style.top = `${e.clientY - offsetY}px`;
+                    function moveAt(pageX, pageY) {
+                        localVideo.style.left = pageX - shiftX + 'px';
+                        localVideo.style.top = pageY - shiftY + 'px';
+                    }
+
+                    function onMouseMove(event) {
+                        moveAt(event.pageX, event.pageY);
                     }
 
                     document.addEventListener('mousemove', onMouseMove);
 
-                    document.addEventListener('mouseup', function () {
+                    localVideo.onmouseup = () => {
                         document.removeEventListener('mousemove', onMouseMove);
-                    }, { once: true });
+                        localVideo.onmouseup = null;
+                    };
                 });
+
+                localVideo.ondragstart = () => false;
 
             })
             .catch(err => {
